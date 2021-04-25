@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+
+import sys
+import argparse
+import docker
+import dockerpty
+import io
+import json
+import getpass
+import platform
+import os
+import re
+import xdg.BaseDirectory
+import configparser
+import subprocess
+from pprint import pprint
+
+
+def load_config(user_confname, osname):
+    ini_list = [ 'runon.conf', '.runon.conf', os.path.join(xdg.BaseDirectory.xdg_config_home, 'runon', 'runon.conf'), '/etc/runon/runon.conf' ]
+    defaults = {
+        'osname': osname,
+        'user': getpass.getuser()
+    }
+    if user_confname:
+        ini_list.insert(0, user_confname)
+    ini = configparser.ConfigParser(defaults=defaults, interpolation=configparser.ExtendedInterpolation())
+    ini.read(ini_list)
+    if not ini.has_section(osname):
+        print('ERROR: cannot find configuration for distribution "{}"'.format(osname))
+        sys.exit(1)
+    conf = {}
+    fields = [ 'dockerfile', 'pkginstall', 'packages', 'environment', 'binds', 'user', 'osname' ]
+    try:
+        for f in fields:
+            conf[f] = ini.get(osname, f)
+    except configparser.NoOptionError as e:
+        print('ERROR: {}'.format(e))
+        sys.exit(1)
+    for f in [ 'dockerfile', 'environment', 'binds' ]:
+        conf[f] = [ i for i in conf[f].split('\n') if i ]
+    for f in [ 'packages' ]:
+        conf[f] = conf[f].split()
+    return conf
+
+
+def make_image_name(osname):
+    user = getpass.getuser()
+    name = 'runon-{}-{}'.format(osname, user)
+    return name
+
+
+def build_image(client, conf, update, verbose):
+    packages = conf['packages']
+    dockerfile = conf['dockerfile']
+    pkginstall = conf['pkginstall']
+    for p in packages:
+        dockerfile.append(pkginstall.format(p))
+    tag = make_image_name(conf['osname'])
+    try:
+        if verbose:
+            # fallback to external command 'docker build' as there is
+            # no way to follow the build progress with API.
+            print('Building image {} ...'.format(tag))
+            cmd = ['docker', 'build']
+            if update:
+                cmd.append('--no-cache')
+            cmd += ['-t', tag, '-']
+            ret = subprocess.run(cmd,
+                                 input='\n'.join(dockerfile).encode('utf-8'),
+                                 stderr=subprocess.STDOUT, check=True)
+            image = client.images.get(tag)
+        else:
+            with io.BytesIO('\n'.join(dockerfile).encode('utf-8')) as fd:
+                image, logs = client.images.build(tag=tag, fileobj=fd, rm=True, nocache=update)
+            if verbose:
+                print('Built image {} / {}'.format(image.tags[0], image.short_id))
+                for l in logs:
+                    print(l.get('stream', '').strip('\n'))
+    except (docker.errors.BuildError, KeyboardInterrupt, subprocess.CalledProcessError, docker.errors.ImageNotFound) as e:
+        print('Build Error: {}'.format(e))
+        print()
+        print('with dockerfile:')
+        for line in dockerfile:
+            print('  {}'.format(line))
+        sys.exit(1)
+    return image
+
+
+def create_container(client, image, conf, command, verbose):
+    volumes = {}
+    environment = {}
+    for mnt in conf['binds']:
+        mnt = mnt.split(':')
+        if mnt[-1] in ['ro','rw']:
+            mode = mnt[-1]
+            del mnt[-1]
+        else:
+            mode = 'rw'
+        mnt = mnt[:2]
+        bind = mnt[-1]
+        vol = mnt[0]
+        volumes[vol] = { 'bind': bind, 'mode': mode }
+    hostname = platform.node()
+    for v in conf['environment']:
+        e = v.split('=')
+        if len(e) == 1:
+            e.append(os.getenv(e[0]))
+        environment[e[0]] = e[1]
+    #environment['debian_chroot']=conf['osname']
+    user='{}:{}'.format(os.getuid(), os.getgid())
+    pwd=os.getcwd()
+
+    container = client.containers.create(image, command,
+                                         detach=False, stdin_open=True, tty=True,
+                                         auto_remove=True,
+                                         hostname=hostname,
+                                         volumes=volumes,
+                                         environment=environment,
+                                         user=user,
+                                         network_mode='host',
+                                         working_dir=pwd
+                                         )
+    return container
+
+
+def run_container(client, container):
+    dockerpty.start(client.api, container.id)
+    container.reload()  # to update attrs fields
+    ret = container.attrs['State']['ExitCode']
+    return ret
+
+
+def main():
+    osname = None
+    run_name = os.path.basename(os.sys.argv[0])
+    if run_name == 'runos':
+        pass
+    elif run_name.startswith('runon'):
+        m = re.match('runon[-_]?(.*)$', run_name)
+        if m:
+            osname = m[1]
+    else:
+        osname = run_name
+
+    parser = argparse.ArgumentParser()
+    if osname:
+        parser.description = 'run commands on "{}" distribution'.format(osname)
+    else:
+        parser.description = 'run commands on any distribution'
+        parser.add_argument('osname',
+                            help = 'distribution name to run on')
+
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='verbose output')
+    parser.add_argument('-c', '--config',
+                        help='specify config file')
+    parser.add_argument('-u', '--update', action='store_true',
+                        help='force image update')
+    parser.add_argument('command', nargs='*', default=None,
+                        help = 'command to execute')
+
+    args = parser.parse_args()
+    if osname:
+        args.osname = osname
+
+    client = docker.from_env()
+    conf = load_config(args.config, args.osname)
+    image = build_image(client, conf, args.update, args.verbose)
+    container = create_container(client, image, conf, args.command, args.verbose)
+    ret = run_container(client, container)
+    return ret
+
+
+if __name__ == '__main__':
+    ret = main()
+    sys.exit(ret)
