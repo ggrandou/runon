@@ -1,6 +1,9 @@
 RUNON - Run your commands in any systems
 ========================================
 
+(c) 2021 Gilles Grandou <gilles@grandou.net>
+licensed under GPL-2.0.
+
 home: https://git.grandou.net/gilles/runon
 
 
