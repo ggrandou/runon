@@ -22,7 +22,7 @@ Quick HOWTO
     $ runon debian9 grep ^PRETTY_NAME /etc/os-release
     PRETTY_NAME="Debian GNU/Linux 9 (stretch)"
 
-		$ runon centos7 xclock
+    $ runon centos7 xclock
     [xclock launched!]
 
 
@@ -106,14 +106,14 @@ keeping:
 
 * `-v` verbose output, this is really usefull when running new
   containers for the first time, as the initial docker build can be
-	quite long (several minutes) especially with slow internet link.
-	If the command seems to be stalled, don't hesitate to interrupt it
-	(with `CTRL-C`) and to restart it with `-v`.
+  quite long (several minutes) especially with slow internet link.
+  If the command seems to be stalled, don't hesitate to interrupt it
+  (with `CTRL-C`) and to restart it with `-v`.
 
 * `-u` forces the container image to be updated, useful if the
   distribution has been updated and you want to use it. Otherwise,
-	if a container has been already built, it will be used directly
-	without doing any network access.
+  if a container has been already built, it will be used directly
+  without doing any network access.
 
 * `-c <configfile>` uses a custom config file, useful to try new
   distribution without breaking your running config.
@@ -206,7 +206,7 @@ overriden in individual section.
 
 * `dockerfile` the base content of dockerfile which will be used to
   generate the running environment. There is usually no need to diverge
-	from the ones given in example.
+  from the ones given in example.
 
 * `pkginstall` the dockerfile command used to install a package, likely
   to be standard for all `deb` and `rpm` based distributions. In the
@@ -217,7 +217,7 @@ overriden in individual section.
 
 * `binds` the list of files and directories from the host system to
   expose in the container system. you might want to add `/opt` or other
-	shared directories. See below for a description of `binds` entries
+  shared directories. See below for a description of `binds` entries
 
 * `environment` the list of environment variables you want to pass or
   set in the container system. See below for a description
@@ -234,9 +234,9 @@ Some substitution happens upon reading the configuration:
 Each `binds` line can have one of the following formats:
 
     <hostpath>
-  	<hostpath>:<mode>
-  	<hostpath>:<containerpath>
-  	<hostpath>:<containerpath>:<mode>
+    <hostpath>:<mode>
+    <hostpath>:<containerpath>
+    <hostpath>:<containerpath>:<mode>
 
 with:
 
@@ -257,6 +257,4 @@ Each line can have one of the following formats:
     <envvar>=<value>
 
 If no value is given, the host value is passed into the container.
-
-
 
