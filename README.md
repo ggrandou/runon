@@ -29,7 +29,7 @@ Install
 Installation is only tested on Debian 10, even though it should work
 straightforward on any equivalent system.
 
-## Docker Install
+### Docker Install
 
     sudo apt install docker
 
@@ -40,7 +40,7 @@ Check that your user is part of `docker` group:
 If needed, you need to logout and login again for the new group to
 become active.
 
-## manual install
+### manual install
 
     cd <tools>
     git clone  https://git.grandou.net/gilles/runon
@@ -63,7 +63,7 @@ system install, for all users:
 each user can have its own configuration in `~/.config/runon/runon.conf`
 if needed.
 
-## uninstall
+### uninstall
 
 simply pass `-u` to install command you have used, eg.:
 
@@ -71,7 +71,7 @@ simply pass `-u` to install command you have used, eg.:
     ./install local -u <dir>
     sudo ./install system -u
 
-## some convenient links
+### some convenient links
 
 you can create soft links to `runos` to simplify calls:
 
@@ -93,13 +93,13 @@ keeping:
 * user environment (uid, gid, password, home directory, ...)
 * X support to run graphical applications
 
-## Basic usage
+### Basic usage
 
     runon [options] <osname> <command>
 
     runon -h
 
-## available options
+### available options
 
 * `-v` verbose output, this is really usefull when running new
   containers for the first time, as the initial docker build can be
@@ -115,7 +115,7 @@ keeping:
 * `-c <configfile>` uses a custom config file, useful to try new
   distribution without breaking your running config.
 
-## Interactive shell
+### Interactive shell
 
 Just run:
 
@@ -156,7 +156,7 @@ Configuration
 Configuration is done in `runon.conf` file, which describes supported
 distribution in .INI format.
 
-## Example config
+### Example config
 
 ```
 [DEFAULT]
@@ -199,7 +199,7 @@ Each section `[osname]` defines a distribution which can be used by runon.
 The `[DEFAULT]` section defines default values which is used if not
 overriden in individual section.
 
-## Config entries
+### Config entries
 
 * `dockerfile` the base content of dockerfile which will be used to
   generate the running environment. There is usually no need to diverge
@@ -226,7 +226,7 @@ Some substitution happens upon reading the configuration:
 * `${user}` the current username
 * `${osname}` the executed distribution.
 
-## Binds
+### Binds
 
 Each `binds` line can have one of the following formats:
 
@@ -243,7 +243,7 @@ with:
   it's the same path.
 * `<mode>` can be `rw`, read-write (by default), or `ro`, read-only.
 
-## Environment
+### Environment
 
 Each `environment` line define a Environment Variable which is set
 in the container upon execution.
