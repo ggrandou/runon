@@ -37,29 +37,39 @@ Check that your user is part of `docker` group:
 
     sudo adduser <user> docker
 
+If needed, you need to logout and login again for the new group to
+become active.
 
 ## manual install
 
     cd <tools>
     git clone  https://git.grandou.net/gilles/runon
 
-local install, in you `~/bin` (or wherever directory which is in your
+local install, in your `~/local/bin` (or wherever directory which is in your
 PATH):
 
-    cd ~/bin
-    ln -s ~/tools/runon/runon
+    cd <runon>
+    ./install local
 
-    mkdir ~/.config/runon
-    cp <tools>/runon/runon.conf ~/.config/runon/
+or
 
-system install, for all users, as `root`:
+    ./install local <your_bin_path>
 
-    mkdir /etc/runon
-    cp <tools>/run/runon /usr/local/bin/runon
-    cp <tools>/run/runon.conf /etc/runon/
+system install, for all users:
 
-each user can have its own configuration in `~/.config/runon/runon.conf`.
+    cd <runon>
+    sudo ./install system
 
+each user can have its own configuration in `~/.config/runon/runon.conf`
+if needed.
+
+## uninstall
+
+simply pass `-u` to install command you have used, eg.:
+
+    ./install local -u
+    ./install local -u <dir>
+    sudo ./install system -u
 
 ## some convenient links
 

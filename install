@@ -1,0 +1,88 @@
+#!/usr/bin/bash
+
+local_bin_dir=~/local/bin
+local_config_dir=~/.config/runon
+system_bin_dir=/etc/runon
+system_config_dir=/usr/local/bin
+
+op=install
+bin_dir=$local_bin_dir
+config_dir=$local_config_dir
+
+function usage
+{
+    echo "$0 [local|system] [-u|--uninstall] [<dest>]"
+    echo
+    echo "  local            install for local user, by default"
+    echo "  system           install for all users"
+    echo "  dev              install in dev mode (create links to source)"
+    echo "  -u, --uninstall  local or system uninstall"
+    echo "  <dest>           destination dir for binary"
+    echo 
+    echo "default local paths:"
+    echo "  binary: $local_bin_dir"
+    echo "  config: $local_config_dir"
+    echo
+    echo "default system paths:"
+    echo "  binary: $system_bin_dir"
+    echo "  config: $system_config_dir"
+    echo
+}
+
+function do_exec
+{
+    echo "$@"
+    "$@"
+}
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        local)
+            bin_dir=$local_bin_dir
+            config_dir=$local_config_dir
+            ;;
+        system)
+            bin_dir=$system_bin_dir
+            config_dir=$system_config_dir
+            ;;
+        dev)
+            bin_dir=$local_bin_dir
+            config_dir=$local_config_dir
+            op=installdev
+            ;;
+        -u) 
+            op=uninstall
+            ;;
+        --uninstall)
+            op=uninstall
+            ;;
+        -h*)
+            usage
+            exit 0
+            ;;
+        *)  bin_dir=$1
+            ;;
+    esac
+    shift
+done
+
+set -e
+
+if [ "$op" = "install" ]; then
+    do_exec install -d $bin_dir
+    do_exec install -d $config_dir
+    #rm -f $bin_dir/runon
+    #rm -f $config_dir/runon
+    do_exec install runon $bin_dir
+    do_exec install runon.conf $config_dir
+elif [ "$op" = "installdev" ]; then
+    do_exec install -d $bin_dir
+    do_exec install -d $config_dir
+    do_exec ln -s -f $(realpath runon) $bin_dir/
+    do_exec ln -s -f $(realpath runon.conf) $config_dir/
+elif [ "$op" = "uninstall" ]; then
+    do_exec rm -f $bin_dir/runon
+    do_exec rm -f $config_dir/runon.conf
+    test -d $bin_dir && do_exec rmdir --parents --ignore-fail-on-non-empty $bin_dir 2> /dev/null
+    test -d $config_dir && do_exec rmdir --parents --ignore-fail-on-non-empty $config_dir 2> /dev/null
+fi
