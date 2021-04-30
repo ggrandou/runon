@@ -125,8 +125,12 @@ def create_container(client, image, conf, command, verbose):
 
 
 def run_container(client, container):
-    dockerpty.start(client.api, container.id)
-    container.reload()  # to update attrs fields
+    try:
+        dockerpty.start(client.api, container.id)
+        container.reload()  # to update attrs fields
+    except docker.errors.APIError as e:
+        print('ERROR: {}'.format(e))
+        sys.exit(1)
     ret = container.attrs['State']['ExitCode']
     return ret
 
