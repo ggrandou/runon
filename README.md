@@ -61,6 +61,18 @@ system install, for all users, as `root`:
 each user can have its own configuration in `~/.config/runon/runon.conf`.
 
 
+## some convenient links
+
+you can create soft links to `runos` to simplify calls:
+
+    cd /usr/local/bin
+    ln -s runon centos7
+
+now calling `centos7 ...` is equivalent to call `runos centos7 ...`:
+
+    centos7 xclock
+
+
 Usage
 -----
 
