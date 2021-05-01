@@ -16,7 +16,11 @@ import subprocess
 from pprint import pprint
 
 
-def load_config(user_confname, osname):
+def natural_sortkey(string):
+    tokenize = re.compile(r'(\d+)|(\D+)').findall
+    return tuple(int(num) if num else alpha for num, alpha in tokenize(string))
+
+def read_ini(user_confname, osname=''):
     ini_list = [ 'runon.conf', '.runon.conf', os.path.join(xdg.BaseDirectory.xdg_config_home, 'runon', 'runon.conf'), '/etc/runon/runon.conf' ]
     defaults = {
         'osname': osname,
@@ -26,6 +30,14 @@ def load_config(user_confname, osname):
         ini_list.insert(0, user_confname)
     ini = configparser.ConfigParser(defaults=defaults, interpolation=configparser.ExtendedInterpolation())
     ini.read(ini_list)
+    return ini
+
+def list_osnames(user_confname):
+    ini = read_ini(user_confname)
+    return ini.sections()
+
+def load_config(user_confname, osname):
+    ini = read_ini(user_confname, osname)
     if not ini.has_section(osname):
         print('ERROR: cannot find configuration for distribution "{}"'.format(osname))
         sys.exit(1)
@@ -153,7 +165,8 @@ def main():
     else:
         parser.description = 'run commands on any distribution'
         parser.add_argument('osname',
-                            help = 'distribution name to run on')
+                            help = 'distribution name to run on, '
+                            '"list" to dump all available distributions')
     parser.epilog = '(c) 2021 Gilles Grandou <gilles@grandou.net>'
 
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -168,6 +181,14 @@ def main():
     args = parser.parse_args()
     if osname:
         args.osname = osname
+
+    if args.osname == 'list':
+        osnames = list_osnames(args.config)
+        print('Available distributions:')
+        for o in sorted(osnames, key=natural_sortkey):
+            print('  {}'.format(o))
+        print()
+        return 0
 
     client = docker.from_env()
     conf = load_config(args.config, args.osname)
