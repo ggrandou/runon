@@ -154,6 +154,7 @@ def main():
         parser.description = 'run commands on any distribution'
         parser.add_argument('osname',
                             help = 'distribution name to run on')
+    parser.epilog = '(c) 2021 Gilles Grandou <gilles@grandou.net>'
 
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='verbose output')
