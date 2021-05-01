@@ -78,8 +78,7 @@ simply pass `-u` to install command you have used, eg.:
 
 you can create soft links to `runos` to simplify calls:
 
-    cd /usr/local/bin
-    ln -s runon centos7
+    runos centos7 -l
 
 now calling `centos7 ...` is equivalent to call `runos centos7 ...`:
 

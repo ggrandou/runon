@@ -56,6 +56,13 @@ def load_config(user_confname, osname):
     return conf
 
 
+def make_osname_link(binpath, osname):
+    link = os.path.join(os.path.dirname(binpath), osname)
+    try:
+        os.symlink('runon', link)
+    except FileExistsError:
+        pass
+
 def make_image_name(osname):
     user = getpass.getuser()
     name = 'runon-{}-{}'.format(osname, user)
@@ -175,6 +182,8 @@ def main():
                         help='specify config file')
     parser.add_argument('-u', '--update', action='store_true',
                         help='force image update')
+    parser.add_argument('-l', '--link', action='store_true',
+                        help='create a symlink to call "osname" as a shortcut to "runon osname"')
     parser.add_argument('command', nargs='*', default=None,
                         help = 'command to execute')
 
@@ -188,10 +197,15 @@ def main():
         for o in sorted(osnames, key=natural_sortkey):
             print('  {}'.format(o))
         print()
+        if args.link:
+            for o in osnames:
+                make_osname_link(sys.argv[0], args.osname)
         return 0
 
     client = docker.from_env()
     conf = load_config(args.config, args.osname)
+    if args.link:
+        make_osname_link(sys.argv[0], args.osname)
     image = build_image(client, conf, args.update, args.verbose)
     container = create_container(client, image, conf, args.command, args.verbose)
     ret = run_container(client, container)

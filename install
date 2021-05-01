@@ -89,6 +89,13 @@ elif [ "$op" = "installdev" ]; then
     do_exec ln -s -f $(realpath runon) $bin_dir/
     do_exec ln -s -f $(realpath runon.conf) $config_dir/
 elif [ "$op" = "uninstall" ]; then
+    # find all symlinks targetting to runon, and remove them
+    find $bin_dir -type l | while read l; do
+        if [ "$(readlink $l)" = "runon" ]; then
+            do_exec rm $l
+        fi
+    done
+
     do_exec rm -f $bin_dir/runon
     do_exec rm -f $config_dir/runon.conf
     test -d $bin_dir && do_exec rmdir --parents --ignore-fail-on-non-empty $bin_dir 2> /dev/null
