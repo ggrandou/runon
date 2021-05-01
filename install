@@ -66,6 +66,14 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+bin_dir=$(realpath $bin_dir)
+config_dir=$(realpath $config_dir)
+
+if [[ ":$PATH:" != *":$bin_dir:"* ]]; then
+    echo "WARNING: $bin_dir is not in your PATH, runon will not be automatically found."
+    echo
+fi
+
 set -e
 
 if [ "$op" = "install" ]; then
